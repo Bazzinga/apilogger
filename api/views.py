@@ -4,6 +4,10 @@ from rest_framework.parsers import BaseParser, JSONParser
 from rest_framework.views import APIView
 
 from api.logparser import BVParser, LoggerException
+from apilog.mongo import RequestsDao
+from pymongo.errors import DuplicateKeyError
+
+dao = RequestsDao()
 
 
 class PlainTextParser(BaseParser):
@@ -28,15 +32,21 @@ class Logger(APIView):
         """
 
         data = request.DATA
+        result = {"result": ""}
         if data:
             parser = BVParser()
-            if isinstance(data, dict):
-                return Response(data, status=status.HTTP_201_CREATED)
-            else:
-                try:
-                    return Response(parser.parse_log(data), status=status.HTTP_201_CREATED)
-                except LoggerException as e:
-                    return Response(e.message, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                if isinstance(data, dict):
+                    result['result'] = dao.insert(data)
+                    return Response(result, status=status.HTTP_201_CREATED)
+                else:
+                    try:
+                        result['result'] = dao.insert(parser.parse_log(data))
+                        return Response(result, status=status.HTTP_201_CREATED)
+                    except LoggerException as e:
+                        return Response(e.message, status=status.HTTP_400_BAD_REQUEST)
+            except DuplicateKeyError as dex:
+                return Response(dex.message, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response("Data received is empty", status=status.HTTP_400_BAD_REQUEST)
 
@@ -47,4 +57,5 @@ class Collection(APIView):
     def delete(self, request, *args, **kwargs):
         """ Remove default log collection
         """
+        dao.remove()
         return Response(status=status.HTTP_204_NO_CONTENT)
