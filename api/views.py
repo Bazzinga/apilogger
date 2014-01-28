@@ -10,13 +10,19 @@ from pymongo.errors import DuplicateKeyError
 dao = RequestsDao()
 
 
+def _prepare_result(result):
+    """ Prepare result dictionary
+    """
+    return {"result": result}
+
+
 class PlainTextParser(BaseParser):
-    """ Plain text parser.
+    """ Plain text parser
     """
     media_type = 'text/plain'
 
     def parse(self, stream, media_type=None, parser_context=None):
-        """Simply return a string representing the body of the request.
+        """ Simply return a string representing the body of the request.
         """
         return stream.read()
 
@@ -27,22 +33,28 @@ class Logger(APIView):
     # Indicating which content-types are accepted in logger api
     parser_classes = (JSONParser, PlainTextParser,)
 
-    def post(self, request, *args, **kwargs):
-        """ Save log data in database
+    def get(self, request, *args, **kwargs):
+        """ Retrieve log information from received id
         """
+        log_id = request.QUERY_PARAMS.get('id', None)
+        if log_id:
+            return Response(_prepare_result(dao.select(log_id)), status=status.HTTP_200_OK)
+        else:
+            return Response("Unknown log ID", status=status.HTTP_400_BAD_REQUEST)
 
+    def post(self, request, *args, **kwargs):
+        """ Store log data in database
+        """
         data = request.DATA
-        result = {"result": ""}
         if data:
             parser = BVParser()
             try:
                 if isinstance(data, dict):
-                    result['result'] = dao.insert(data)
-                    return Response(result, status=status.HTTP_201_CREATED)
+                    return Response(_prepare_result(dao.insert(data)), status=status.HTTP_201_CREATED)
                 else:
                     try:
-                        result['result'] = dao.insert(parser.parse_log(data))
-                        return Response(result, status=status.HTTP_201_CREATED)
+                        return Response(_prepare_result(dao.insert(parser.parse_log(data))),
+                                        status=status.HTTP_201_CREATED)
                     except LoggerException as e:
                         return Response(e.message, status=status.HTTP_400_BAD_REQUEST)
             except DuplicateKeyError as dex:

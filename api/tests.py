@@ -7,12 +7,13 @@ from api.logparser import BVParser, LoggerException
 from apilog.mongo import RequestsDao
 from pymongo.errors import DuplicateKeyError
 from mock import patch
+from django.core.urlresolvers import reverse
 
 
 class TestApiLogger(unittest.TestCase):
     """ API Logger class unit tests
     """
-    LOG_PATH_URL = '/partnerprovisioning/v1/log'
+    LOG_PATH_URL = reverse('logger-api')
 
     def setUp(self):
         self.client = Client()
@@ -29,13 +30,61 @@ class TestApiLogger(unittest.TestCase):
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 404, "Page not found error")
 
-    def test_get_log_exception_method_not_allowed(self):
+    def test_delete_log_exception_method_not_allowed(self):
         """ Testing get call to apilog, returning method not allowed
         """
-        ret = self.client.get(TestApiLogger.LOG_PATH_URL)
+        ret = self.client.delete(TestApiLogger.LOG_PATH_URL)
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 405, "Method not allowed")
         self.assertEqual(ret.status_text, u'METHOD NOT ALLOWED')
+
+    def test_get_empty_log_info(self):
+        """ Testing getting empty log information
+        """
+        ret = self.client.get(TestApiLogger.LOG_PATH_URL)
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.status_code, 400)
+        self.assertEqual(ret.data, "Unknown log ID")
+
+    @patch.object(RequestsDao, 'select')
+    def test_get_log_info(self, mock_select):
+        """ Testing getting log information
+        """
+        query = {"id": 12345678}
+        mock_select.return_value = {
+            "_id": {"$oid": "5280abe0fdc74475f9581e58"},
+            "origin": "FE",
+            "body": "[\"GET /provisioning/v1/applications?serviceId=1&fields=appId&appApi.keyword=wo15671 HTTP/1.1\"]",
+            "http_request": {
+                "url": "provisioning/v1/applications",
+                "api": "provisioning",
+                "method": "GET"
+            },
+            "responseDate": {"date": 1382323724329},
+            "api": "provisioning",
+            "app": "FrontendBasic",
+            "domain": "Bluevia",
+            "host": "nsdpgwfe1",
+            "serviceId": "1",
+            "requestDate": {"date": 1382323724170},
+            "body_request": {
+
+            },
+            "responseCode": "200",
+            "appId": "40601",
+            "transactionId": "0866111a-d601-42a2-9ec4-403a1391735c",
+            "id": 1,
+            "statType": "INFOSTATS"
+        }
+        ret = self.client.get(TestApiLogger.LOG_PATH_URL, query)
+        # QueryDict works with unicode data
+        mock_select.assert_called_once_with(unicode(query['id']))
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.status_code, 200)
+        self.assertIsInstance(ret.data, dict)
+        self.assertEqual(ret.data, {'result': mock_select.return_value})
+
+
 
     def test_post_log_empty_data(self):
         """ Testing status 400 POST with empty log data
@@ -216,7 +265,7 @@ class TestApiLogger(unittest.TestCase):
 class TestApiCollection(unittest.TestCase):
     """ API Collection class unit tests
     """
-    COL_PATH_URL = '/partnerprovisioning/v1/collection'
+    COL_PATH_URL = reverse('collection-api')
 
     def setUp(self):
         self.client = Client()
@@ -235,6 +284,7 @@ class TestApiCollection(unittest.TestCase):
         mock_request_dao.assert_called_once_with()
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 204, "Correct remove status returned")
+        self.assertEqual(ret.status_text, 'NO CONTENT')
 
 
 class LogParserTest(unittest.TestCase):

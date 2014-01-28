@@ -79,6 +79,15 @@ class RequestsDao(Dao):
         # Not returning objectId, just our id
         return doc['id']
 
+    def select(self, log_id):
+        """ Retrieve log from log_id
+        """
+        doc = self.dbcoll.find_one({'id': log_id})
+        if doc:
+            return doc
+        else:
+            return ''
+
     def remove(self):
         """Remove requests collection
         """
