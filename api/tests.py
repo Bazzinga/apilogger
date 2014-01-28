@@ -4,7 +4,7 @@ import json
 from django.test.client import Client
 from rest_framework.test import APIClient
 from api.logparser import BVParser, LoggerException
-from apilog.mongo import RequestsDao
+from apilog.mongo import RequestsDao, DBLogException
 from pymongo.errors import DuplicateKeyError
 from mock import patch
 from django.core.urlresolvers import reverse
@@ -13,7 +13,8 @@ from django.core.urlresolvers import reverse
 class TestApiLogger(unittest.TestCase):
     """ API Logger class unit tests
     """
-    LOG_PATH_URL = reverse('logger-api')
+    LOG_DETAIL_URL = reverse('logger-api-detail', args=[1,])
+    LOG_URL = reverse('logger-api')
 
     def setUp(self):
         self.client = Client()
@@ -33,24 +34,34 @@ class TestApiLogger(unittest.TestCase):
     def test_delete_log_exception_method_not_allowed(self):
         """ Testing get call to apilog, returning method not allowed
         """
-        ret = self.client.delete(TestApiLogger.LOG_PATH_URL)
+        ret = self.client.delete(TestApiLogger.LOG_DETAIL_URL)
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 405, "Method not allowed")
         self.assertEqual(ret.status_text, u'METHOD NOT ALLOWED')
 
-    def test_get_empty_log_info(self):
-        """ Testing getting empty log information
+    def test_get_all_logs(self):
+        """ Testing getting all logs
         """
-        ret = self.client.get(TestApiLogger.LOG_PATH_URL)
+        ret = self.client.get(TestApiLogger.LOG_URL)
         self.assertIsNotNone(ret)
-        self.assertEqual(ret.status_code, 400)
-        self.assertEqual(ret.data, "Unknown log ID")
+        self.assertEqual(ret.status_code, 200)
+        self.assertIsInstance(ret.data, dict)
+        self.assertEqual(ret.data, {"result": ""})
+
+    def test_post_list_of_logs(self):
+        """ Testing storing a list of logs
+        """
+        data = {"data": "data"}
+        ret = self.client.post(TestApiLogger.LOG_URL, data, content_type='application/json')
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.status_code, 200)
+        self.assertIsInstance(ret.data, dict)
+        self.assertEqual(ret.data, {"result": ""})
 
     @patch.object(RequestsDao, 'select')
     def test_get_log_info(self, mock_select):
         """ Testing getting log information
         """
-        query = {"id": 12345678}
         mock_select.return_value = {
             "_id": {"$oid": "5280abe0fdc74475f9581e58"},
             "origin": "FE",
@@ -76,20 +87,28 @@ class TestApiLogger(unittest.TestCase):
             "id": 1,
             "statType": "INFOSTATS"
         }
-        ret = self.client.get(TestApiLogger.LOG_PATH_URL, query)
+        ret = self.client.get(TestApiLogger.LOG_DETAIL_URL)
         # QueryDict works with unicode data
-        mock_select.assert_called_once_with(unicode(query['id']))
+        mock_select.assert_called_once_with(unicode(1))
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 200)
         self.assertIsInstance(ret.data, dict)
         self.assertEqual(ret.data, {'result': mock_select.return_value})
 
-
+    @patch.object(RequestsDao, 'select')
+    def test_get_log_exception(self, mock_request_dao):
+        error_text = "Data log does not exist"
+        mock_request_dao.side_effect = DBLogException(error_text)
+        ret = self.client.get('/partnerprovisioning/v1/log/2/')
+        mock_request_dao.assert_called_once_with(unicode(2))
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.status_code, 404)
+        self.assertEqual(ret.data, error_text)
 
     def test_post_log_empty_data(self):
         """ Testing status 400 POST with empty log data
         """
-        ret = self.client.post(TestApiLogger.LOG_PATH_URL)
+        ret = self.client.post(TestApiLogger.LOG_DETAIL_URL)
         self.assertIsNotNone(ret)
         self.assertEqual(ret.data, 'Data received is empty')
         self.assertEqual(ret.status_code, 400, "Status 400 returned in POST because empty data")
@@ -101,7 +120,7 @@ class TestApiLogger(unittest.TestCase):
         data = {"data": "datas"}
         error_text = 'Duplicated data inserted'
         mock_request_dao.side_effect = DuplicateKeyError(error_text, code=1000)
-        ret = self.apiclient.post(TestApiLogger.LOG_PATH_URL, data, format='json')
+        ret = self.apiclient.post(TestApiLogger.LOG_DETAIL_URL, data, format='json')
         mock_request_dao.assert_called_once_with(dict({"data": "datas"}))
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 400)
@@ -113,7 +132,7 @@ class TestApiLogger(unittest.TestCase):
         """
         data = {"data": "datas"}
         mock_request_dao.return_value = 12345678
-        ret = self.apiclient.post(TestApiLogger.LOG_PATH_URL, data, format='json')
+        ret = self.apiclient.post(TestApiLogger.LOG_DETAIL_URL, data, format='json')
         mock_request_dao.assert_called_once_with(dict({"data": "datas"}))
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 201)
@@ -126,7 +145,7 @@ class TestApiLogger(unittest.TestCase):
         """
         data = json.dumps({"data": "datas"})
         mock_request_dao.return_value = 12345678
-        ret = self.client.post(TestApiLogger.LOG_PATH_URL, data, content_type='application/json')
+        ret = self.client.post(TestApiLogger.LOG_DETAIL_URL, data, content_type='application/json')
         mock_request_dao.assert_called_once_with(dict({"data": "datas"}))
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 201)
@@ -186,7 +205,7 @@ class TestApiLogger(unittest.TestCase):
             "statType": "INFOSTATS"
         }
         mock_request_dao.return_value = 1234567
-        ret = self.client.post(TestApiLogger.LOG_PATH_URL, data, content_type='text/plain')
+        ret = self.client.post(TestApiLogger.LOG_DETAIL_URL, data, content_type='text/plain')
         mock_parse_log.assert_called_once_with(data)
         mock_request_dao.assert_called_once_with(mock_parse_log.return_value)
         self.assertIsNotNone(ret)
@@ -229,7 +248,7 @@ class TestApiLogger(unittest.TestCase):
             "statType": "INFOSTATS"
         }
         mock_request_dao.return_value = 1234567
-        ret = self.client.post(TestApiLogger.LOG_PATH_URL, data, content_type='text/plain')
+        ret = self.client.post(TestApiLogger.LOG_DETAIL_URL, data, content_type='text/plain')
         mock_parse_log.assert_called_once_with(data)
         mock_request_dao.assert_called_once_with(mock_parse_log.return_value)
         self.assertIsNotNone(ret)
@@ -242,7 +261,7 @@ class TestApiLogger(unittest.TestCase):
         """
         data = 'afadfadfadfa'
         mock_parse_log.side_effect = LoggerException('Error processing received log')
-        ret = self.client.post(TestApiLogger.LOG_PATH_URL, data, content_type='text/plain')
+        ret = self.client.post(TestApiLogger.LOG_DETAIL_URL, data, content_type='text/plain')
         mock_parse_log.assert_called_once_with(data)
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 400)
@@ -254,7 +273,7 @@ class TestApiLogger(unittest.TestCase):
         """
         data = {"data": "hello"}
         mock_request_dao.return_value = 12345678
-        ret = self.apiclient.post(TestApiLogger.LOG_PATH_URL, data, format='json')
+        ret = self.apiclient.post(TestApiLogger.LOG_DETAIL_URL, data, format='json')
         mock_request_dao.assert_called_once_with(dict(data))
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 201)
@@ -327,7 +346,7 @@ class LogParserTest(unittest.TestCase):
         with self.assertRaises(LoggerException) as loggerexception:
             self.parser.parse_log(data)
         exc = loggerexception.exception
-        self.assertEqual(exc.message, 'Error processing received log')
+        self.assertEqual(exc.value, 'Error processing received log')
 
     def test_parse_data_no_ob_exception(self):
         data = '2013/05/17T02:10:25.335 2013/05/17T02:10:25.548 Microsoft 1e246bb8-1162-46a2-93af-1da64ca9e3cb FE ' \
@@ -336,7 +355,7 @@ class LogParserTest(unittest.TestCase):
             self.parser.parse_log(data)
 
         exc = loggerexception.exception
-        self.assertEqual(exc.message, 'Send data does not match with log structure')
+        self.assertEqual(exc.value, 'Send data does not match with log structure')
 
     def test_parse_data_without_exception_inside(self):
         data = '2013/05/17T02:10:25.335 2013/05/17T02:10:25.548 Microsoft 1e246bb8-1162-46a2-93af-1da64ca9e3cb FE ' \

@@ -4,8 +4,9 @@ from rest_framework.parsers import BaseParser, JSONParser
 from rest_framework.views import APIView
 
 from api.logparser import BVParser, LoggerException
-from apilog.mongo import RequestsDao
+from apilog.mongo import RequestsDao, DBLogException
 from pymongo.errors import DuplicateKeyError
+from django.http import Http404
 
 dao = RequestsDao()
 
@@ -28,21 +29,37 @@ class PlainTextParser(BaseParser):
 
 
 class Logger(APIView):
-    """ Logger api
+    """ Get and post all log information
     """
     # Indicating which content-types are accepted in logger api
     parser_classes = (JSONParser, PlainTextParser,)
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, format=None):
+        """ Return all logs
+        """
+        return Response(_prepare_result(''), status=status.HTTP_200_OK)
+
+    def post(self, request, format=None):
+        """ Post a list of logs
+        """
+        return Response(_prepare_result(''), status=status.HTTP_200_OK)
+
+
+class LoggerDetail(APIView):
+    """ Logger detail api
+    """
+    # Indicating which content-types are accepted in logger api
+    parser_classes = (JSONParser, PlainTextParser,)
+
+    def get(self, request, log_id, format=None):
         """ Retrieve log information from received id
         """
-        log_id = request.QUERY_PARAMS.get('id', None)
-        if log_id:
+        try:
             return Response(_prepare_result(dao.select(log_id)), status=status.HTTP_200_OK)
-        else:
-            return Response("Unknown log ID", status=status.HTTP_400_BAD_REQUEST)
+        except DBLogException as dbex:
+            return Response(dbex.value, status=status.HTTP_404_NOT_FOUND)
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, log_id, format=None):
         """ Store log data in database
         """
         data = request.DATA
@@ -56,7 +73,9 @@ class Logger(APIView):
                         return Response(_prepare_result(dao.insert(parser.parse_log(data))),
                                         status=status.HTTP_201_CREATED)
                     except LoggerException as e:
-                        return Response(e.message, status=status.HTTP_400_BAD_REQUEST)
+                        return Response(e.value, status=status.HTTP_400_BAD_REQUEST)
+                    except DBLogException:
+                        raise Http404
             except DuplicateKeyError as dex:
                 return Response(dex.message, status=status.HTTP_400_BAD_REQUEST)
         else:

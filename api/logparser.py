@@ -11,8 +11,14 @@ import dateutil.parser
 #logger = logging.getLogger('bvapilog')
 
 
-class LoggerException(BaseException):
-    pass
+class LoggerException(Exception):
+    """ Logger exception
+    """
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 
 class BVParser(object):
@@ -115,7 +121,7 @@ class BVParser(object):
                         api = http_request["api"]
                     except Exception, e:
                         #logger.error('Error processing log: {0} -- {1}'.format(log_info, e))
-                        raise LoggerException('Error processing received log')
+                        raise LoggerException("Error processing received log")
 
                 log_info["api"] = api.lower() if api else ""
                 log_info["http_request"] = http_request

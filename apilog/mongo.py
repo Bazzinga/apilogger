@@ -5,6 +5,16 @@ from pymongo.errors import AutoReconnect
 _connection = None
 
 
+class DBLogException(Exception):
+    """ Own database exception
+    """
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
 class Connection(object):
     """
     Singleton connection
@@ -81,12 +91,14 @@ class RequestsDao(Dao):
 
     def select(self, log_id):
         """ Retrieve log from log_id
+        :log_id: id from log to retrieve
+        :raises DBLogException
         """
         doc = self.dbcoll.find_one({'id': log_id})
         if doc:
             return doc
         else:
-            return ''
+            raise DBLogException("Data log does not exist")
 
     def remove(self):
         """Remove requests collection
