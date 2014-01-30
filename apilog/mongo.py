@@ -106,6 +106,12 @@ class RequestsDao(Dao):
         else:
             raise DBLogException("Data log {} does not exist".format(log_id))
 
+    def delete_doc(self, log_id):
+        """ Delete a document
+        :log_id: Id from log
+        """
+        self.dbcoll.remove({"id": int(log_id)}, w=1)
+
     def remove(self):
         """Remove requests collection
         """

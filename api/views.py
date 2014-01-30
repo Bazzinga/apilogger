@@ -67,6 +67,13 @@ class LoggerDetail(APIView):
     # Indicating which content-types are accepted in logger api
     parser_classes = (JSONParser, PlainTextParser,)
 
+    def delete(self, request, log_id, format=None):
+        """ Delete log
+        :log_id: id identifier
+        """
+        dao.delete_doc(log_id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     def get(self, request, log_id, format=None):
         """ Retrieve log information from received id
         :log_id: id from log to be retrieved

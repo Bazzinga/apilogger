@@ -31,13 +31,24 @@ class ApiLoggerDetailTest(unittest.TestCase):
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 404, "Page not found error")
 
-    def test_delete_log_exception_method_not_allowed(self):
+    def test_put_log_exception_method_not_allowed(self):
         """ Testing get call to apilog, returning method not allowed
         """
-        ret = self.client.delete(ApiLoggerDetailTest.LOG_DETAIL_URL)
+        ret = self.client.put(ApiLoggerDetailTest.LOG_DETAIL_URL)
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 405, "Method not allowed")
         self.assertEqual(ret.status_text, u'METHOD NOT ALLOWED')
+
+    @patch.object(RequestsDao, 'delete_doc')
+    def test_delete_log(self, mock_request_dao):
+        """ Deleting an stored log
+        """
+        ret = self.client.delete(ApiLoggerDetailTest.LOG_DETAIL_URL)
+        mock_request_dao.assert_called_once_with(unicode(1))
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.status_code, 204)
+        self.assertEqual(ret.status_text, u'NO CONTENT')
+        self.assertIsNone(ret.data)
 
     @patch.object(RequestsDao, 'insert')
     def test_post_new_log(self, mock_request_dao):
