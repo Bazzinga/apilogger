@@ -3,17 +3,18 @@ import json
 
 from django.test.client import Client
 from rest_framework.test import APIClient
+from pymongo.errors import DuplicateKeyError
+from mock import patch, create_autospec
+from django.core.urlresolvers import reverse
 from api.logparser import BVParser, LoggerException
 from apilog.mongo import RequestsDao, DBLogException
-from pymongo.errors import DuplicateKeyError
-from mock import patch
-from django.core.urlresolvers import reverse
+from pymongo.cursor import Cursor
 
 
 class TestApiLogger(unittest.TestCase):
     """ API Logger class unit tests
     """
-    LOG_DETAIL_URL = reverse('logger-api-detail', args=[1,])
+    LOG_DETAIL_URL = reverse('logger-api-detail', args=[1, ])
     LOG_URL = reverse('logger-api')
 
     def setUp(self):
@@ -39,14 +40,18 @@ class TestApiLogger(unittest.TestCase):
         self.assertEqual(ret.status_code, 405, "Method not allowed")
         self.assertEqual(ret.status_text, u'METHOD NOT ALLOWED')
 
-    def test_get_all_logs(self):
+    @patch.object(RequestsDao, 'select')
+    def test_get_all_logs(self, mock_request_dao):
         """ Testing getting all logs
         """
+        # Select return a cursor instance with data
+        mock_request_dao.return_value = create_autospec(Cursor)
         ret = self.client.get(TestApiLogger.LOG_URL)
+        mock_request_dao.assert_called_once_with()
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 200)
         self.assertIsInstance(ret.data, dict)
-        self.assertEqual(ret.data, {"result": ""})
+        self.assertEqual(ret.data, {"result": [mock_request_dao.return_value]})
 
     def test_post_list_of_logs(self):
         """ Testing storing a list of logs

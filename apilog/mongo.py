@@ -89,12 +89,17 @@ class RequestsDao(Dao):
         # Not returning objectId, just our id
         return doc['id']
 
-    def select(self, log_id):
+    def select(self, log_id=None):
         """ Retrieve log from log_id
         :log_id: id from log to retrieve
         :raises DBLogException
         """
-        doc = self.dbcoll.find_one({'id': log_id})
+        if log_id:
+            doc = self.dbcoll.find_one({'id': log_id})
+        else:
+            # Getting 50 logs
+            doc = self.dbcoll.find().limit(50)
+
         if doc:
             return doc
         else:

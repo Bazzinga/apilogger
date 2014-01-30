@@ -6,7 +6,6 @@ from rest_framework.views import APIView
 from api.logparser import BVParser, LoggerException
 from apilog.mongo import RequestsDao, DBLogException
 from pymongo.errors import DuplicateKeyError
-from django.http import Http404
 
 dao = RequestsDao()
 
@@ -35,9 +34,9 @@ class Logger(APIView):
     parser_classes = (JSONParser, PlainTextParser,)
 
     def get(self, request, format=None):
-        """ Return all logs
+        """ Return all logs in a list
         """
-        return Response(_prepare_result(''), status=status.HTTP_200_OK)
+        return Response(_prepare_result([dao.select()]), status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
         """ Post a list of logs
@@ -74,8 +73,6 @@ class LoggerDetail(APIView):
                                         status=status.HTTP_201_CREATED)
                     except LoggerException as e:
                         return Response(e.value, status=status.HTTP_400_BAD_REQUEST)
-                    except DBLogException:
-                        raise Http404
             except DuplicateKeyError as dex:
                 return Response(dex.message, status=status.HTTP_400_BAD_REQUEST)
         else:
