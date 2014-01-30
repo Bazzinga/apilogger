@@ -36,12 +36,29 @@ class Logger(APIView):
     def get(self, request, format=None):
         """ Return all logs in a list
         """
-        return Response(_prepare_result([dao.select()]), status=status.HTTP_200_OK)
+        return Response(_prepare_result([doc for doc in dao.select()]), status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
         """ Post a list of logs
+        :request data posted to store in data base
         """
-        return Response(_prepare_result(''), status=status.HTTP_200_OK)
+        data = request.DATA
+        if data:
+            try:
+                if isinstance(data, dict):
+                    # direct insert in db
+                    return Response(_prepare_result(dao.insert(data)), status=status.HTTP_201_CREATED)
+                else:
+                    parser = BVParser()
+                    try:
+                        return Response(_prepare_result(dao.insert(parser.parse_log(data))),
+                                        status=status.HTTP_201_CREATED)
+                    except LoggerException as e:
+                        return Response(e.value, status=status.HTTP_400_BAD_REQUEST)
+            except DuplicateKeyError as dex:
+                return Response(dex.message, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response("Data received is empty", status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoggerDetail(APIView):
@@ -52,6 +69,7 @@ class LoggerDetail(APIView):
 
     def get(self, request, log_id, format=None):
         """ Retrieve log information from received id
+        :log_id: id from log to be retrieved
         """
         try:
             return Response(_prepare_result(dao.select(log_id)), status=status.HTTP_200_OK)
@@ -59,7 +77,7 @@ class LoggerDetail(APIView):
             return Response(dbex.value, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request, log_id, format=None):
-        """ Store log data in database
+        """ Update log data in database from log_id
         """
         data = request.DATA
         if data:

@@ -93,17 +93,18 @@ class RequestsDao(Dao):
         """ Retrieve log from log_id
         :log_id: id from log to retrieve
         :raises DBLogException
+        :return doc data without ObjectId
         """
         if log_id:
-            doc = self.dbcoll.find_one({'id': log_id})
+            doc = self.dbcoll.find_one({"id": int(log_id)}, {"_id": False})
         else:
             # Getting 50 logs
-            doc = self.dbcoll.find().limit(50)
+            doc = self.dbcoll.find({}, {'_id': False}).limit(50)
 
         if doc:
             return doc
         else:
-            raise DBLogException("Data log does not exist")
+            raise DBLogException("Data log {} does not exist".format(log_id))
 
     def remove(self):
         """Remove requests collection
