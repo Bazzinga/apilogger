@@ -153,7 +153,7 @@ LOGGING = {
     'disable_existing_loggers': True,
     'root': {
         'level': 'DEBUG',
-        'handlers': ['parser', 'debug', 'all']
+        'handlers': ['debug', 'all']
     },
     'formatters': {
         'verbose': {
