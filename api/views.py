@@ -1,3 +1,5 @@
+import logging
+import logging.config
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.parsers import BaseParser, JSONParser
@@ -6,7 +8,11 @@ from rest_framework.views import APIView
 from api.logparser import BVParser, LoggerException
 from apilog.mongo import RequestsDao, DBLogException
 from pymongo.errors import DuplicateKeyError
+from apilog import settings
 
+
+logging.config.dictConfig(settings.LOGGING)
+logger = logging.getLogger('apilog')
 dao = RequestsDao()
 
 
@@ -54,11 +60,14 @@ class Logger(APIView):
                         return Response(_prepare_result(dao.insert(parser.parse_log(data))),
                                         status=status.HTTP_201_CREATED)
                     except LoggerException as e:
+                        logger.error("POST error: {}".format(e.value))
                         return Response(e.value, status=status.HTTP_400_BAD_REQUEST)
             except DuplicateKeyError as dex:
+                logger.error("Duplicate key error {}".format(dex.message))
                 return Response(dex.message, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response("Data received is empty", status=status.HTTP_400_BAD_REQUEST)
+            logger.error("Received data is empty")
+            return Response("Received data is empty", status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoggerDetail(APIView):
@@ -75,6 +84,7 @@ class LoggerDetail(APIView):
         if result['n'] > 0:
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
+            logger.error("Unknown log {} to delete".format(log_id))
             return Response("Unknown log {} to delete".format(log_id), status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request, log_id, format=None):
@@ -84,6 +94,7 @@ class LoggerDetail(APIView):
         try:
             return Response(_prepare_result(dao.select(log_id)), status=status.HTTP_200_OK)
         except DBLogException as dbex:
+            logger.error("DB error: {}".format(dbex.value))
             return Response(dbex.value, status=status.HTTP_404_NOT_FOUND)
 
     def put(self, request, log_id, format=None):
@@ -95,9 +106,11 @@ class LoggerDetail(APIView):
             if result['updatedExisting']:
                 return Response("Log {} updated correctly".format(log_id), status=status.HTTP_200_OK)
             else:
+                logger.error("Unknown log {} to update".format(log_id))
                 return Response("Unknown log {} to update".format(log_id), status=status.HTTP_404_NOT_FOUND)
         else:
-            return Response("Data received is empty", status=status.HTTP_400_BAD_REQUEST)
+            logger.error("Received data is empty")
+            return Response("Received data is empty", status=status.HTTP_400_BAD_REQUEST)
 
 
 class Collection(APIView):

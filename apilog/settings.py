@@ -1,4 +1,5 @@
 # Django settings for apilog project.
+import os
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -145,31 +146,59 @@ INSTALLED_APPS = (
 # Nosetests settings
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error when DEBUG=False.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
+# Logger configuration
+LOGGING_ROOT = os.path.abspath('/opt/bvp/log')
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
+    'disable_existing_loggers': True,
+    'root': {
+        'level': 'DEBUG',
+        'handlers': ['parser', 'debug', 'all']
+    },
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s | %(machine)s | %(module)s | %(levelname)s | %(request_id)s | apilog | %(module)s |'
+                      ' %(process)d | %(thread)d | %(message)s'
+        },
+        'simple': {
+            'format': '%(asctime)s | %(module)s | %(levelname)s | apilog | %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
         }
+    },
+    'filters': {
+        'log_filter': {
+            '()': 'apilog.filterhelper.AddMachineFilter'}
     },
     'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
+        'parser': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'simple',
+            'filename': os.path.join(LOGGING_ROOT, "py.apilog.parser" + '.log')
+        },
+        'debug': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filters': ['log_filter'],
+            'formatter': 'simple',
+            'filename': os.path.join(LOGGING_ROOT, "py.apilog.debug" + '.log'),
+        },
+        'all': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': os.path.join(LOGGING_ROOT, "py.apilog.all" + '.log')}
     },
     'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
+        'apilog': {
+            'handlers': ['debug'],
+            'level': 'INFO',
+            'propagate': True
         },
+        'apilog.parser': {
+            'handlers': ['parser'],
+            'level': 'INFO',
+            'propagate': True
+        }
     }
 }

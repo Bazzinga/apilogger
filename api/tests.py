@@ -94,7 +94,7 @@ class ApiLoggerDetailTest(unittest.TestCase):
         """
         ret = self.client.put(ApiLoggerDetailTest.LOG_DETAIL_URL)
         self.assertIsNotNone(ret)
-        self.assertEqual(ret.data, 'Data received is empty')
+        self.assertEqual(ret.data, "Received data is empty")
         self.assertEqual(ret.status_code, 400, "Status 400 returned in POST because empty data")
 
     @patch.object(RequestsDao, 'select')
@@ -166,7 +166,7 @@ class ApiLoggerTest(unittest.TestCase):
         ret = self.client.post(ApiLoggerTest.LOG_URL)
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 400)
-        self.assertEqual(ret.data, "Data received is empty")
+        self.assertEqual(ret.data, "Received data is empty")
         self.assertEqual(ret.status_text, 'BAD REQUEST')
 
     @patch.object(RequestsDao, 'insert')

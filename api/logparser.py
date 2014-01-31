@@ -1,14 +1,14 @@
 import re
 import json
 import base64
-#import logging
-#import logging.config
+import logging
+import logging.config
 import dateutil.parser
-#from logs import config
+from apilog import settings
 
 
-#logging.config.dictConfig(config.LOGGING)
-#logger = logging.getLogger('bvapilog')
+logging.config.dictConfig(settings.LOGGING)
+logger = logging.getLogger('apilog.parser')
 
 
 class LoggerException(Exception):
@@ -23,7 +23,7 @@ class LoggerException(Exception):
 
 class BVParser(object):
     SUPPORTED_APIS = ['Payment', 'payment', 'NeoPayment', 'MobileId']
-    """List of fields with interesting info"""
+    # List of fields with interesting info
     INTERESTING_FIELDS = [
         'partnerName',
         'text',
@@ -120,7 +120,7 @@ class BVParser(object):
                         http_request = body_match.groupdict()
                         api = http_request["api"]
                     except Exception, e:
-                        #logger.error('Error processing log: {0} -- {1}'.format(log_info, e))
+                        logger.error('Error processing log: {0} -- {1}'.format(log_info, e))
                         raise LoggerException("Error processing received log")
 
                 log_info["api"] = api.lower() if api else ""
@@ -131,11 +131,11 @@ class BVParser(object):
                 if 'exceptionId' in body_request:
                     log_info['exceptionId'] = body_request['exceptionId']
 
-                #logger.info('Processed data: {0}'.format(log_info))
+                logger.info('Processed data: {0}'.format(log_info))
                 return log_info
             else:
-                #logger.error('Send data does not match with logger structure {0}'.format(oneLog))
+                logger.error('Send data does not match with logger structure {0}'.format(oneLog))
                 raise LoggerException("Send data does not match with log structure")
         else:
-            #logger.error('Invalid data log: {0}'.format(oneLog))
+            logger.error('Invalid data log: {0}'.format(oneLog))
             raise LoggerException("Invalid data log")
