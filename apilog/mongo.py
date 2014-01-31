@@ -106,11 +106,17 @@ class RequestsDao(Dao):
         else:
             raise DBLogException("Data log {} does not exist".format(log_id))
 
-    def delete_doc(self, log_id):
+    def update_doc(self, log_id, data, operation_ack=1):
+        """ Update doc by id
+        :log_id: Id from log
+        """
+        return self.dbcoll.update({"id": int(log_id)}, data, w=operation_ack)
+
+    def delete_doc(self, log_id, operation_ack=1):
         """ Delete a document
         :log_id: Id from log
         """
-        self.dbcoll.remove({"id": int(log_id)}, w=1)
+        self.dbcoll.remove({"id": int(log_id)}, w=operation_ack)
 
     def remove(self):
         """Remove requests collection

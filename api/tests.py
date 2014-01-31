@@ -31,10 +31,10 @@ class ApiLoggerDetailTest(unittest.TestCase):
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 404, "Page not found error")
 
-    def test_put_log_exception_method_not_allowed(self):
-        """ Testing get call to apilog, returning method not allowed
+    def test_post_log_exception_method_not_allowed(self):
+        """ Testing post call to apilog, returning method not allowed
         """
-        ret = self.client.put(ApiLoggerDetailTest.LOG_DETAIL_URL)
+        ret = self.client.post(ApiLoggerDetailTest.LOG_DETAIL_URL)
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 405, "Method not allowed")
         self.assertEqual(ret.status_text, u'METHOD NOT ALLOWED')
@@ -44,24 +44,45 @@ class ApiLoggerDetailTest(unittest.TestCase):
         """ Deleting an stored log
         """
         ret = self.client.delete(ApiLoggerDetailTest.LOG_DETAIL_URL)
-        mock_request_dao.assert_called_once_with(unicode(1))
+        mock_request_dao.assert_called_once_with(u'1')
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 204)
         self.assertEqual(ret.status_text, u'NO CONTENT')
         self.assertIsNone(ret.data)
 
-    @patch.object(RequestsDao, 'insert')
-    def test_post_new_log(self, mock_request_dao):
-        """ Post a new data log
+    @patch.object(RequestsDao, 'update_doc')
+    def test_update_unknown_log(self, mock_request_dao):
+        """ Update unknown log
         """
+        mock_request_dao.return_value = {u'updatedExisting': False,
+                                         u'connectionId': 462, u'ok': 1.0, u'err': None, u'n': 0}
         data = json.dumps({"data": "datas"})
-        mock_request_dao.return_value = 12345678
-        ret = self.client.post(ApiLoggerDetailTest.LOG_DETAIL_URL, data, content_type='application/json')
-        mock_request_dao.assert_called_once_with(dict({"data": "datas"}))
+        ret = self.client.put('/partnerprovisioning/v1/log/2/', data, content_type='application/json')
+        mock_request_dao.assert_called_once_with(u'2', {u'data': u'datas'})
         self.assertIsNotNone(ret)
-        self.assertEqual(ret.status_code, 201)
-        self.assertIsInstance(ret.data, dict)
-        self.assertEqual(ret.data, {"result": 12345678})
+        self.assertEqual(ret.status_code, 404)
+        self.assertEqual(ret.data, "Unknown log 2 to update")
+
+    @patch.object(RequestsDao, 'update_doc')
+    def test_update_log(self, mock_request_dao):
+        """ Update data log
+        """
+        mock_request_dao.return_value = {u'updatedExisting': True,
+                                         u'connectionId': 462, u'ok': 1.0, u'err': None, u'n': 1}
+        data = json.dumps({"data": "datas"})
+        ret = self.client.put(ApiLoggerDetailTest.LOG_DETAIL_URL, data, content_type='application/json')
+        mock_request_dao.assert_called_once_with(u'1', {u'data': u'datas'})
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.data, "Log 1 updated correctly")
+
+    def test_update_log_empty_data(self):
+        """ Testing status 400 PUT with empty log data
+        """
+        ret = self.client.put(ApiLoggerDetailTest.LOG_DETAIL_URL)
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.data, 'Data received is empty')
+        self.assertEqual(ret.status_code, 400, "Status 400 returned in POST because empty data")
 
     @patch.object(RequestsDao, 'select')
     def test_get_log_info(self, mock_select):
@@ -102,6 +123,8 @@ class ApiLoggerDetailTest(unittest.TestCase):
 
     @patch.object(RequestsDao, 'select')
     def test_get_log_exception(self, mock_request_dao):
+        """ Getting not existing log
+        """
         error_text = "Data log does not exist"
         mock_request_dao.side_effect = DBLogException(error_text)
         ret = self.client.get('/partnerprovisioning/v1/log/2/')
@@ -109,14 +132,6 @@ class ApiLoggerDetailTest(unittest.TestCase):
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 404)
         self.assertEqual(ret.data, error_text)
-
-    def test_post_log_empty_data(self):
-        """ Testing status 400 POST with empty log data
-        """
-        ret = self.client.post(ApiLoggerDetailTest.LOG_DETAIL_URL)
-        self.assertIsNotNone(ret)
-        self.assertEqual(ret.data, 'Data received is empty')
-        self.assertEqual(ret.status_code, 400, "Status 400 returned in POST because empty data")
 
 
 class ApiLoggerTest(unittest.TestCase):

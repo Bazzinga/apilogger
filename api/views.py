@@ -69,7 +69,7 @@ class LoggerDetail(APIView):
 
     def delete(self, request, log_id, format=None):
         """ Delete log
-        :log_id: id identifier
+        :log_id: log id identifier
         """
         dao.delete_doc(log_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -83,23 +83,16 @@ class LoggerDetail(APIView):
         except DBLogException as dbex:
             return Response(dbex.value, status=status.HTTP_404_NOT_FOUND)
 
-    def post(self, request, log_id, format=None):
+    def put(self, request, log_id, format=None):
         """ Update log data in database from log_id
         """
         data = request.DATA
         if data:
-            parser = BVParser()
-            try:
-                if isinstance(data, dict):
-                    return Response(_prepare_result(dao.insert(data)), status=status.HTTP_201_CREATED)
-                else:
-                    try:
-                        return Response(_prepare_result(dao.insert(parser.parse_log(data))),
-                                        status=status.HTTP_201_CREATED)
-                    except LoggerException as e:
-                        return Response(e.value, status=status.HTTP_400_BAD_REQUEST)
-            except DuplicateKeyError as dex:
-                return Response(dex.message, status=status.HTTP_400_BAD_REQUEST)
+            result = dao.update_doc(log_id, data)
+            if result['updatedExisting']:
+                return Response("Log {} updated correctly".format(log_id), status=status.HTTP_200_OK)
+            else:
+                return Response("Unknown log {} to update".format(log_id), status=status.HTTP_404_NOT_FOUND)
         else:
             return Response("Data received is empty", status=status.HTTP_400_BAD_REQUEST)
 
