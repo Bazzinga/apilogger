@@ -71,8 +71,11 @@ class LoggerDetail(APIView):
         """ Delete log
         :log_id: log id identifier
         """
-        dao.delete_doc(log_id)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        result = dao.delete_doc(log_id)
+        if result['n'] > 0:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response("Unknown log {} to delete".format(log_id), status=status.HTTP_404_NOT_FOUND)
 
     def get(self, request, log_id, format=None):
         """ Retrieve log information from received id

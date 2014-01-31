@@ -116,7 +116,7 @@ class RequestsDao(Dao):
         """ Delete a document
         :log_id: Id from log
         """
-        self.dbcoll.remove({"id": int(log_id)}, w=operation_ack)
+        return self.dbcoll.remove({"id": int(log_id)}, w=operation_ack)
 
     def remove(self):
         """Remove requests collection

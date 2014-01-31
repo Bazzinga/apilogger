@@ -15,6 +15,7 @@ class ApiLoggerDetailTest(unittest.TestCase):
     """ API Logger class unit tests
     """
     LOG_DETAIL_URL = reverse('logger-api-detail', args=[1, ])
+    UNKNOWN_LOG = '/partnerprovisioning/v1/log/2/'
 
     def setUp(self):
         self.client = Client()
@@ -40,9 +41,21 @@ class ApiLoggerDetailTest(unittest.TestCase):
         self.assertEqual(ret.status_text, u'METHOD NOT ALLOWED')
 
     @patch.object(RequestsDao, 'delete_doc')
+    def test_delete_uknown_log(self, mock_request_dao):
+        """ Deleting unknown log
+        """
+        mock_request_dao.return_value = {u'connectionId': 479, u'ok': 1.0, u'err': None, u'n': 0}
+        ret = self.client.delete(ApiLoggerDetailTest.UNKNOWN_LOG)
+        mock_request_dao.assert_called_once_with(u'2')
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.status_code, 404)
+        self.assertEqual(ret.data, "Unknown log 2 to delete")
+
+    @patch.object(RequestsDao, 'delete_doc')
     def test_delete_log(self, mock_request_dao):
         """ Deleting an stored log
         """
+        mock_request_dao.return_value = {u'connectionId': 479, u'ok': 1.0, u'err': None, u'n': 1}
         ret = self.client.delete(ApiLoggerDetailTest.LOG_DETAIL_URL)
         mock_request_dao.assert_called_once_with(u'1')
         self.assertIsNotNone(ret)
@@ -57,7 +70,7 @@ class ApiLoggerDetailTest(unittest.TestCase):
         mock_request_dao.return_value = {u'updatedExisting': False,
                                          u'connectionId': 462, u'ok': 1.0, u'err': None, u'n': 0}
         data = json.dumps({"data": "datas"})
-        ret = self.client.put('/partnerprovisioning/v1/log/2/', data, content_type='application/json')
+        ret = self.client.put(ApiLoggerDetailTest.UNKNOWN_LOG, data, content_type='application/json')
         mock_request_dao.assert_called_once_with(u'2', {u'data': u'datas'})
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 404)
