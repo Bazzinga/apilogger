@@ -1,13 +1,15 @@
 import unittest
 from apilog import mongo
-from mock import patch, create_autospec
+from mock import patch, create_autospec, Mock
 from pymongo.cursor import Cursor
+from pymongo.connection import Connection
 
 
-class mongoTest(unittest.TestCase):
-    """ Mongo db class testing
+class RequestDaoTest(unittest.TestCase):
+    """ Request dao class testing
     """
     DATA = {u'text': u'My first log post!', u'author': u'Jalp', u'tags': [u'mongodb', u'python', u'pymongo']}
+    ID = {'id': 1}
 
     def setUp(self):
         self.dao = mongo.RequestsDao()
@@ -18,18 +20,16 @@ class mongoTest(unittest.TestCase):
     def test_select_log(self):
         """ Find all data (limit 50)
         """
-        with patch.object(Cursor, 'limit', return_value=mongoTest.DATA) as mock_limit:
+        with patch.object(Cursor, 'limit', return_value=RequestDaoTest.DATA) as mock_limit:
             mock_cursor = create_autospec(Cursor, return_value=mock_limit)
             with patch.object(self.dao.dbcoll, 'find', return_value=mock_cursor):
                 result = self.dao.select()
-                for doc in result:
-                    self.assertEqual(doc['text'], 'My first log post!')
-                    self.assertEqual(doc['author'], 'Jalp')
+                self.assertIsNotNone(result)
 
     def test_select_by_log_id(self):
         """ Select data information
         """
-        with patch.object(self.dao.dbcoll, 'find_one', return_value=mongoTest.DATA) as mock_select:
+        with patch.object(self.dao.dbcoll, 'find_one', return_value=RequestDaoTest.DATA) as mock_select:
             result = self.dao.select(1)
             self.assertIsNotNone(result)
             mock_select.caassert_called_once_with(1)
@@ -43,7 +43,7 @@ class mongoTest(unittest.TestCase):
         with patch.object(self.dao.dbcoll, 'find_one', return_value=None) as mock_find_one:
             with self.assertRaises(mongo.DBLogException) as exc:
                 self.dao.select(1)
-                mock_find_one.assert_called_once_with(1)
+            mock_find_one.assert_called_once_with(RequestDaoTest.ID, {'_id': False})
             ret_except = exc.exception
             self.assertEqual(ret_except.value, "Data log 1 does not exist")
 
@@ -52,22 +52,22 @@ class mongoTest(unittest.TestCase):
         """
         with patch.object(self.dao, '_get_id_value', return_value=123456) as mock_id:
             with patch.object(self.dao.dbcoll, 'insert') as mock_insert:
-                result = self.dao.insert(mongoTest.DATA)
+                result = self.dao.insert(RequestDaoTest.DATA)
                 self.assertIsNotNone(result)
                 self.assertEqual(result, 123456)
                 mock_id.assert_called_once_with()
-                mock_insert.assert_called_once_with(mongoTest.DATA, w=1)
+                mock_insert.assert_called_once_with(RequestDaoTest.DATA, w=1)
 
     def test_update_request_dao(self):
         """ Update log data
         """
         with patch.object(self.dao.dbcoll, 'update', return_value={u'updatedExisting': True, u'connectionId': 462,
                                                                    u'ok': 1.0, u'err': None, u'n': 1}) as mock_update:
-            result = self.dao.update_doc(1, mongoTest.DATA)
+            result = self.dao.update_doc(1, RequestDaoTest.DATA)
             self.assertIsNotNone(result)
             self.assertEqual(result['n'], 1)
             self.assertTrue(result['updatedExisting'])
-            mock_update.assert_called_once_with({"id": 1}, mongoTest.DATA, w=1)
+            mock_update.assert_called_once_with(RequestDaoTest.ID, RequestDaoTest.DATA, w=1)
 
     def test_delete_request_dao(self):
         """ Delete log
@@ -77,7 +77,7 @@ class mongoTest(unittest.TestCase):
             result = self.dao.delete_doc(1)
             self.assertIsNotNone(result)
             self.assertEqual(result['n'], 1)
-            mock_remove.assert_called_once_with({"id": 1}, w=1)
+            mock_remove.assert_called_once_with(RequestDaoTest.ID, w=1)
 
     def test_remove_request_dao(self):
         """ Remove request collection
@@ -85,3 +85,15 @@ class mongoTest(unittest.TestCase):
         with patch.object(self.dao.dbcoll, 'drop') as mock_drop:
             self.dao.remove()
             mock_drop.assert_called_once_with()
+
+
+class DaoTest(unittest.TestCase):
+    """ Dao class testing
+    """
+    def test_attribute_error(self):
+        """ Collection atribute exception
+        """
+        with self.assertRaises(AttributeError) as exc:
+            mongo.Dao()
+        ret_except = exc.exception
+        self.assertEqual(ret_except.message, "'Dao' object has no attribute 'coll'")
