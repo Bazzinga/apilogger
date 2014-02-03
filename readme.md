@@ -44,6 +44,8 @@ user	4m17.710s
 sys		3m20.521s
 
 #### JSON
+Insert 50000 json data log into database
+
     time for i in $(seq 1 50000); do curl -X POST -H "Content-Type: application/json" -d '{"origin": "BE", "body": [{"MobileId": {"info": {"userAgent": "Apache-HttpClient/4.1.1 (java 1.5)", "contentType": "application/json", "xff": null}}}], "http_request": {}, "responseDate": "2013-07-30T14:10:09.154Z", "api": "mobileid", "app": "MobileId", "domain": null, "serviceId": "", "requestDate": "2013-07-30T14:10:08.617Z", "body_request":{"msisdn": ""}, "responseCode": "400", "appId": "", "transactionId": "2bf76d13-883a-419e-bfb3-f9a05e83928e", "id": 81,"statType": "INFOSTATS"}' http://localhost:8000/partnerprovisioning/v1/log/; done
 ##### Result
 real	10m32.990s
