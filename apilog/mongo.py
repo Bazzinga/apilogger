@@ -1,5 +1,5 @@
-#from gevent import monkey
-#monkey.patch_all()
+from gevent import monkey
+monkey.patch_all()
 from settings import MONGODB
 from pymongo import MongoClient, ReadPreference
 from pymongo.errors import AutoReconnect

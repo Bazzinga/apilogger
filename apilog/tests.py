@@ -2,7 +2,6 @@ import unittest
 from apilog import mongo
 from mock import patch, create_autospec, Mock
 from pymongo.cursor import Cursor
-from pymongo.connection import Connection
 
 
 class RequestDaoTest(unittest.TestCase):
@@ -91,7 +90,7 @@ class DaoTest(unittest.TestCase):
     """ Dao class testing
     """
     def test_attribute_error(self):
-        """ Collection atribute exception
+        """ Collection attribute exception
         """
         with self.assertRaises(AttributeError) as exc:
             mongo.Dao()
