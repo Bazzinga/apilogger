@@ -49,6 +49,7 @@ class Logger(APIView):
             try:
                 if isinstance(data, dict):
                     # direct insert in db
+                    logger_api.info("Data inserted directly {}".format(data))
                     return Response(_prepare_result(dao.insert(data)), status=status.HTTP_201_CREATED)
                 else:
                     parser = BVParser()

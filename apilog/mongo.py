@@ -1,5 +1,5 @@
-from gevent import monkey
-monkey.patch_all()
+#from gevent import monkey
+#monkey.patch_all()
 from settings import MONGODB
 from pymongo import MongoClient, ReadPreference
 from pymongo.errors import AutoReconnect
@@ -93,14 +93,13 @@ class RequestsDao(Dao):
 
     def select(self, log_id=None):
         """ Retrieve log from log_id
-        :log_id: id from log to retrieve
+        :log_id: id from log to retrieve. If none, get all logs (limit 50)
         :raises DBLogException
         :return doc data without ObjectId
         """
         if log_id:
             doc = self.dbcoll.find_one({"id": int(log_id)}, {"_id": False})
         else:
-            # Getting 50 logs
             doc = self.dbcoll.find({}, {'_id': False}).limit(50)
 
         if doc:
