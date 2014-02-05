@@ -120,7 +120,7 @@ class RequestsDao(Dao):
         return self.dbcoll.remove({"id": int(log_id)}, w=operation_ack)
 
     def remove(self):
-        """Remove requests collection
+        """ Remove requests collection
         """
         self.dbcoll.drop()
 
@@ -136,3 +136,9 @@ class DB(object):
         """ Return all collections names in database
         """
         return self.dbconn.collection_names(include_system_collections)
+
+    def drop_collection(self, name):
+        """ Drop selected collection from database
+        :name: collection name
+        """
+        return self.dbconn.drop_collection(name)

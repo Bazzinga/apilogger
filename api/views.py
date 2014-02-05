@@ -124,3 +124,13 @@ class Collection(APIView):
         """ Return all collection names from database
         """
         return Response(_prepare_result(data_base.get_collection_names()), status=status.HTTP_200_OK)
+
+
+class CollectionDetail(APIView):
+    """ Detailed data collection class
+    """
+    def delete(self, request, name):
+        """ Delete requested collection from database
+        """
+        data_base.drop_collection(name)
+        return Response(status=status.HTTP_204_NO_CONTENT)

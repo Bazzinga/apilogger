@@ -382,6 +382,27 @@ class ApiCollectionTest(unittest.TestCase):
         self.assertEqual(ret.status_text, 'NO CONTENT')
 
 
+class ApiCollectionDetailTest(unittest.TestCase):
+    """ Api collection detail class tests
+    """
+    COL_DETAIL_URL = reverse('collection-api-detail', args=['requests', ])
+
+    def setUp(self):
+        self.client = Client()
+
+    def tearDown(self):
+        del self.client
+
+    @patch.object(DB, 'drop_collection')
+    def test_delete_request_collection(self, mock_request_drop):
+        """ Testing delete requests collection from database
+        """
+        ret = self.client.delete(ApiCollectionDetailTest.COL_DETAIL_URL)
+        mock_request_drop.assert_called_once_with('requests')
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.status_code, 204)
+
+
 class LogParserTest(unittest.TestCase):
     """ Test log parser module
     """
