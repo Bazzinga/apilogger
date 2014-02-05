@@ -142,3 +142,15 @@ class DB(object):
         :name: collection name
         """
         return self.dbconn.drop_collection(name)
+
+    def get_option(self, name):
+        """ Get data options from collection 'name'
+        :name: collection name
+        """
+        return self.dbconn[name].options()
+
+    def count(self, name):
+        """ Get collection count
+        :name: collection name
+        """
+        return self.dbconn[name].count()

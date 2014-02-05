@@ -131,6 +131,17 @@ class CollectionDetail(APIView):
     """
     def delete(self, request, name):
         """ Delete requested collection from database
+        :name: collection name to be deleted
         """
         data_base.drop_collection(name)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get(self, request, name):
+        """ Return collection name options or count
+        :name: collection name
+        """
+        count = request.QUERY_PARAMS.has_key('count')
+        if count:
+            return Response(_prepare_result(data_base.count(name)), status=status.HTTP_200_OK)
+        else:
+            return Response(_prepare_result(data_base.get_option(name)), status=status.HTTP_200_OK)

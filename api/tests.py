@@ -402,6 +402,27 @@ class ApiCollectionDetailTest(unittest.TestCase):
         self.assertIsNotNone(ret)
         self.assertEqual(ret.status_code, 204)
 
+    @patch.object(DB, 'get_option', return_value={})
+    def test_get_collection_options(self, mock_get_option):
+        """ Getting collection information
+        """
+        ret = self.client.get(ApiCollectionDetailTest.COL_DETAIL_URL)
+        mock_get_option.assert_called_once_with('requests')
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.data, {'result': {}})
+
+    @patch.object(DB, 'count', return_value=1)
+    def test_get_collection_document_count(self, mock_count):
+        """ Getting document count from requests collection
+        """
+        ret = self.client.get("{0}{1}".format(ApiCollectionDetailTest.COL_DETAIL_URL, "?count"))
+        mock_count.assert_called_once_with('requests')
+        self.assertIsNotNone(ret)
+        self.assertIsNotNone(ret.request['QUERY_STRING'])
+        self.assertEqual(ret.request['QUERY_STRING'], 'count')
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.data, {'result': 1})
 
 class LogParserTest(unittest.TestCase):
     """ Test log parser module
