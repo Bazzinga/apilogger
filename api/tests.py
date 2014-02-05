@@ -424,6 +424,7 @@ class ApiCollectionDetailTest(unittest.TestCase):
         self.assertEqual(ret.status_code, 200)
         self.assertEqual(ret.data, {'result': 1})
 
+
 class LogParserTest(unittest.TestCase):
     """ Test log parser module
     """

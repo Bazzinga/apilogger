@@ -140,8 +140,7 @@ class CollectionDetail(APIView):
         """ Return collection name options or count
         :name: collection name
         """
-        count = request.QUERY_PARAMS.has_key('count')
-        if count:
+        if 'count' in request.QUERY_PARAMS:
             return Response(_prepare_result(data_base.count(name)), status=status.HTTP_200_OK)
         else:
             return Response(_prepare_result(data_base.get_option(name)), status=status.HTTP_200_OK)
