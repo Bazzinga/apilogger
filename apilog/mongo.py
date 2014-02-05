@@ -123,3 +123,16 @@ class RequestsDao(Dao):
         """Remove requests collection
         """
         self.dbcoll.drop()
+
+
+class DB(object):
+    """ DB generic information class
+    """
+    def __init__(self):
+        client = Connection()
+        self.dbconn = client.get_connection()
+
+    def get_collection_names(self, include_system_collections=False):
+        """ Return all collections names in database
+        """
+        return self.dbconn.collection_names(include_system_collections)

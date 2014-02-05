@@ -5,11 +5,12 @@ from rest_framework.parsers import BaseParser, JSONParser
 from rest_framework.views import APIView
 
 from api.logparser import BVParser, LoggerException
-from apilog.mongo import RequestsDao, DBLogException
+from apilog.mongo import RequestsDao, DBLogException, DB
 from pymongo.errors import DuplicateKeyError
 
 logger_api = logging.getLogger("apilog")
 dao = RequestsDao()
+data_base = DB()
 
 
 def _prepare_result(result):
@@ -113,8 +114,13 @@ class LoggerDetail(APIView):
 class Collection(APIView):
     """ Database collection api
     """
-    def delete(self, request, *args, **kwargs):
-        """ Remove default log collection
+    def delete(self, request):
+        """ Remove requests log collection
         """
         dao.remove()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get(self, request, format=None):
+        """ Return all collection names from database
+        """
+        return Response(_prepare_result(data_base.get_collection_names()), status=status.HTTP_200_OK)

@@ -7,7 +7,7 @@ from pymongo.errors import DuplicateKeyError
 from mock import patch, create_autospec
 from django.core.urlresolvers import reverse
 from api.logparser import BVParser, LoggerException
-from apilog.mongo import RequestsDao, DBLogException
+from apilog.mongo import RequestsDao, DBLogException, DB
 from pymongo.cursor import Cursor
 
 
@@ -361,9 +361,16 @@ class ApiCollectionTest(unittest.TestCase):
     def tearDown(self):
         del self.client
 
-    def test_remove_log_collection_status_204(self):
-        """ Testing deleting collection
+    @patch.object(DB, 'get_collection_names', return_value=['ids', 'requests'])
+    def test_get_logs_collections_name(self, mock_request_dao):
+        """ Testing getting all collection names in database
         """
+        ret = self.client.get(ApiCollectionTest.COL_PATH_URL)
+        mock_request_dao.assert_called_once_with()
+        self.assertIsNotNone(ret)
+        self.assertEqual(ret.status_code, 200)
+        self.assertEqual(ret.data, {'result': ['ids', 'requests']})
+
     @patch.object(RequestsDao, 'remove')
     def test_remove_log_collection_status_204(self, mock_request_dao):
         """ Testing calling remove collection in mongo
