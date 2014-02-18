@@ -1,5 +1,16 @@
 # Django settings for apilog project.
 import os
+from django.core.exceptions import ImproperlyConfigured
+
+# Defensive code for improperly configured settings
+msg = "Set the {} environment variable"
+
+
+def get_env_variable(var_name):
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        raise ImproperlyConfigured(msg.format(var_name))
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -97,8 +108,7 @@ STATICFILES_FINDERS = (
     # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = 'f(_pp&ew+c%i1#!kv67yu*od%c73c4bc8#eyib+1^8o45cs6*d'
+SECRET_KEY = get_env_variable("SECRET")
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
