@@ -118,6 +118,7 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
+    'log_request_id.middleware.RequestIDMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -167,17 +168,19 @@ LOGGING = {
     },
     'formatters': {
         'verbose': {
-            'format': '%(asctime)s | %(machine)s | %(module)s | %(levelname)s | %(request_id)s | apilog | %(module)s |'
-                      ' %(process)d | %(thread)d | %(message)s'
+            'format': '%(request_id)s | %(asctime)s | %(machine)s | %(module)s | %(levelname)s | %(request_id)s | '
+                      'apilog | %(module)s | %(process)d | %(thread)d | %(message)s'
         },
         'simple': {
-            'format': '%(asctime)s | %(module)s | %(levelname)s | apilog | %(message)s',
+            'format': '%(request_id)s | %(asctime)s | %(module)s | %(levelname)s | apilog | %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         }
     },
     'filters': {
         'log_filter': {
-            '()': 'apilog.filterhelper.AddMachineFilter'}
+            '()': 'apilog.filterhelper.AddMachineFilter'},
+        'request_id': {
+            '()': 'log_request_id.filters.RequestIDFilter'}
     },
     'handlers': {
         'parser': {
@@ -189,13 +192,14 @@ LOGGING = {
         'debug': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filters': ['log_filter'],
+            'filters': ['log_filter', 'request_id'],
             'formatter': 'simple',
             'filename': os.path.join(LOGGING_ROOT, "py.apilog.debug" + '.log'),
         },
         'all': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
+            'filters': ['request_id'],
             'formatter': 'verbose',
             'filename': os.path.join(LOGGING_ROOT, "py.apilog.all" + '.log')}
     },
