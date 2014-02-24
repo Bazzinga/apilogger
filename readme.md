@@ -1,7 +1,10 @@
 # Apilog
 
 ## Description
-Simple django application to store log data through a REST API in mongoDB. Developed in django, django-rest-framework, running through gunicorn and storing data in mongodb.
+Simple django application to store log data through a REST API in mongoDB. Developed in django, django-rest-framework, running through gunicorn and storing data in mongodb. Also using nginx to have proxypass from http to https.
+
+## Architecture
+[Architecture](https://github.com/jalp/apilogger/wiki)
 
 ## Requeriments
 
@@ -17,6 +20,7 @@ Needed packages:
 - coverage==3.7.1
 - dateutils==0.6.6
 - django-nose==1.2
+- django-log-request-id==1.0.0
 - djangorestframework==2.3.12
 - gevent==1.0
 - greenlet==0.4.2
@@ -29,6 +33,19 @@ Needed packages:
 - six==1.5.2
 - wsgiref==0.1.2
 
+## gUnicorn configuration
+	import multiprocessing
+
+	bind = '0.0.0.0:8000'
+	workers = multiprocessing.cpu_count() * 2 + 1
+	worker_class = 'gevent'
+	loglevel = 'debug'
+	backlog = 2048
+	errorlog = '/opt/bvp/log/gunicorn-error.log'
+	accesslog = '/opt/bvp/log/gunicorn-access.log'
+## Nginx configuration
+I use Nginx as proxy_pass to redirect all the service requests from http to https.  
+[Here](https://gist.github.com/jalp/9093810) you can find it (I upload a gist with the code) 
 ## Simple stress test
 #### Plain text
 Insert 50000 text plain data log into database
