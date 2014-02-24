@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import BaseParser, JSONParser
 from rest_framework.views import APIView
 
-from api.logparser import BVParser, LoggerException
+from .logparser import BVParser, LoggerException
 from apilog.mongo import RequestsDao, DBLogException, DB
 from pymongo.errors import DuplicateKeyError
 

@@ -6,7 +6,7 @@ from rest_framework.test import APIClient
 from pymongo.errors import DuplicateKeyError
 from mock import patch, create_autospec
 from django.core.urlresolvers import reverse
-from api.logparser import BVParser, LoggerException
+from .logparser import BVParser, LoggerException
 from apilog.mongo import RequestsDao, DBLogException, DB
 from pymongo.cursor import Cursor
 

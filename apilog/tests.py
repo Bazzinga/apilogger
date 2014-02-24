@@ -1,6 +1,6 @@
 import unittest
 from apilog import mongo
-from mock import patch, create_autospec, Mock
+from mock import patch, create_autospec
 from pymongo.cursor import Cursor
 
 

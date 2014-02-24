@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 from rest_framework.urlpatterns import format_suffix_patterns
-from views import Logger, LoggerDetail, Collection, CollectionDetail
+from .views import Logger, LoggerDetail, Collection, CollectionDetail
 
 urlpatterns = patterns('api.views',
                        url(r'^log/$', Logger.as_view(), name='logger-api'),
