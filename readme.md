@@ -50,7 +50,7 @@ I use Nginx as proxy_pass to redirect all the service requests from http to http
 #### Plain text
 Insert 50000 text plain data log into database
 
->time for i in $(seq 1 50000); do curl -X POST -H 'Content-Type: text/plain' -d '2013/10/11T11:48:50.860 2013/10/11T11:48:50.898 M2M 5f4e6060-58d5-443c-bafd-3f09ba532f28 BE MobileId / 21407 INFOSTATS 400 [{"MobileId":{"info":{"userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.69 Safari/537.36","xff":"10.70.15.127, 46.233.72.114","contentType":null}}}] ' http://localhost:8000/partnerprovisioning/v1/log/; done
+>time for i in $(seq 1 50000); do curl -k -i -L -X POST -H 'Content-Type: text/plain' -d '2013/10/11T11:48:50.860 2013/10/11T11:48:50.898 M2M 5f4e6060-58d5-443c-bafd-3f09ba532f28 BE MobileId / 21407 INFOSTATS 400 [{"MobileId":{"info":{"userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.69 Safari/537.36","xff":"10.70.15.127, 46.233.72.114","contentType":null}}}] ' http://localhost:8000/partnerprovisioning/v1/log/; done
 
 ##### Result:
 
@@ -63,7 +63,7 @@ sys		3m20.521s
 #### JSON
 Insert 50000 json data log into database
 
->time for i in $(seq 1 50000); do curl -X POST -H "Content-Type: application/json" -d '{"origin": "BE", "body": [{"MobileId": {"info": {"userAgent": "Apache-HttpClient/4.1.1 (java 1.5)", "contentType": "application/json", "xff": null}}}], "http_request": {}, "responseDate": "2013-07-30T14:10:09.154Z", "api": "mobileid", "app": "MobileId", "domain": null, "serviceId": "", "requestDate": "2013-07-30T14:10:08.617Z", "body_request":{"msisdn": ""}, "responseCode": "400", "appId": "", "transactionId": "2bf76d13-883a-419e-bfb3-f9a05e83928e", "id": 81,"statType": "INFOSTATS"}' http://localhost:8000/partnerprovisioning/v1/log/; done
+>time for i in $(seq 1 50000); do curl -k -i -L -X POST -H "Content-Type: application/json" -d '{"origin": "BE", "body": [{"MobileId": {"info": {"userAgent": "Apache-HttpClient/4.1.1 (java 1.5)", "contentType": "application/json", "xff": null}}}], "http_request": {}, "responseDate": "2013-07-30T14:10:09.154Z", "api": "mobileid", "app": "MobileId", "domain": null, "serviceId": "", "requestDate": "2013-07-30T14:10:08.617Z", "body_request":{"msisdn": ""}, "responseCode": "400", "appId": "", "transactionId": "2bf76d13-883a-419e-bfb3-f9a05e83928e", "id": 81,"statType": "INFOSTATS"}' http://localhost:8000/partnerprovisioning/v1/log/; done
 
 ##### Result
 real	10m32.990s
