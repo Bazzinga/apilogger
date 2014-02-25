@@ -15,9 +15,7 @@ def get_env_variable(var_name):
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
-ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
-)
+ADMINS = ()
 
 MANAGERS = ADMINS
 
@@ -149,8 +147,8 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     'django_nose',
-    # Own apps
     'rest_framework',
+    # Own apps
     'api',
 )
 
@@ -186,6 +184,7 @@ LOGGING = {
         'parser': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
+            'filters': ['request_id'],
             'formatter': 'simple',
             'filename': os.path.join(LOGGING_ROOT, "py.apilog.parser" + '.log')
         },
