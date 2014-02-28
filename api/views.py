@@ -39,7 +39,9 @@ class Logger(APIView):
     def get(self, request, format=None):
         """ Return all logs in a list
         """
-        return Response(_prepare_result([doc for doc in dao.select()]), status=status.HTTP_200_OK)
+        ret = [doc for doc in dao.select()]
+        logger_api.info(ret)
+        return Response(_prepare_result(ret), status=status.HTTP_200_OK)
 
     def post(self, request, format=None):
         """ Post a list of logs
